@@ -1,0 +1,11 @@
+[ cur, r, _next, _is_term, goal ] = transitions
+[ cur, a, r, _next, _is_term, cur_goal, next_goal ] = transitions
+
+def optimize( self, sess, sb, vb, mb, action_batch, reward_batch, goal_batch, learning_rate ):
+        self.optim.zero_grad()
+        goal_batch = goal_batch
+        reward_batch = torch.tensor( reward_batch, dtype = torch.float32 ).cuda()
+        loss = self.get_loss( sess, sb, vb, mb, action_batch, reward_batch, goal_batch )
+        loss.backward()
+        self.optim.step()
+        return loss.cpu().detach().item()
