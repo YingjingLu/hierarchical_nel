@@ -44,6 +44,17 @@ def goal_to_onehot( goal_batch, goal_size = 3 ):
         res[ i, goal_batch[ i ] ] = 1
     return res
 
+def construct_train_batch_actor( episode ):
+    pass
+
+
+def construct_train_batch_critic( episode ):
+    pass
+
+def construct_test_batch_actor( prev_prev_state, ):
+    pass
+
+
 def construct_batch( sample_list ):
     state_batch = []
     action_batch = []

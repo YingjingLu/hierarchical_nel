@@ -47,6 +47,7 @@ class A2C( object ):
             self.lr_decay = 0.99
 
             self.prev_state = None 
+            self.prev_prev_state = None
             self.available_tong = 0
 
         self.actor = Actor( lr )
@@ -67,7 +68,7 @@ class A2C( object ):
         cur_episode = 5201
         print( "Enter training" )
         while cur_episode < self.max_episode + 1:
-
+ 
             if _iter < 100000: self.epi = epi[ _iter ]
             else: self.epi = 0.3
 
@@ -204,21 +205,76 @@ class A2C( object ):
 
         return sum( total ) / num_sepi
 
+    def search_max_reward_in_vision_achievable( self ):
+        """
+            achievable return is defined as:
+                reward in the immediate front ( go straight and get it )
+                reward in the immediate front after turn left
+                reward in the immediate front after turn right
+            if there are multiple rewards, then we choose the action that result in maximum reward
+            if multiple direction has the same, choose according to straight, left, right 
+            with the one that estimates with least action to get
+            Tong will be measured as equally important as the jelly
+
+        Requires:
+            self.prev_state not None
+
+        """
+        pass
+
+    def micro_action( self ):
+        """
+        if 
+            there is a reward achievable reurned by search_max_reward_in_vision_achievable:
+            then we execute that action
+        else
+            we perform action according to the actor return
+        Requires:
+            self.prev_state not None
+
+        Returns:
+            action number
+        """
+
+        # check if there is achievable action
+        res = self.search_max_reward_in_vision_achievable()
+        if res != -1:
+            return res
+        # return actor's choice
+        delta_scent_batch, prev_vision_batch, cur_vision_batch, moved_batch, tong_batch
+        action = 
+    
     def generate_episode( self, num_step = TERM_STEP ):
         # continue from previous location and step an episode amount of steps
-        # compile the episode data and return in the format of list of [ prev_state, action, reward, cur_state, tong ]
+        # compile the episode data and return in the format of list of [ prev_prev_state, prev_state, action, reward, cur_state, tong ]
         # self.prev_state : record prev_state
         # self.available_tong: record available tong
         res = []
         if self.prev_state is None:
-            self.prev_state = self.env.reset()
-        
+            self.prev_prev_state = self.env.reset()
+            self.prev_state = self.env.step( 1 )
+        step = 0
+        while step < num_step:
+            # get action
+            action = self.micro_action( self.prev_state )
+            # get state and reward 
+            next_state, reward, _, _ = self.env.step( action )
+            # append history to res
+            res.append( [ self.prev_prev_state, self.prev_state, 
+                          action, reward, next_state, self.available_tong ] )
+            # get available tong from env agent
+            collected_items = self.env._agent.collected_items()
+            self.available_tong = collected_items[ 1 ] - collected_items[ 0 ]
+            # update prev_state
+            self.prev_prev_state = self.prev_state
+            self.prev_state = next_state
         return res
 
     def save_model(self, episode_num = 100 ):
         # Helper function to save your model / weights. 
         path = os.path.join( self.env_dir, str( episode_num ) ) + "/"
-        os.mkdir( path ) if not os.path.exists( path ) else print( "Warning: saving in an existing path for episode {}".format( episode_num ) )
+        os.mkdir( path ) if not os.path.exists( path ) \
+                         else print( "Warning: saving in an existing path for episode {}".format( episode_num ) )
         cpt = dict()
         cpt[ "actor" ] = self.actor.network.state_dict()
         cpt[ "actor_optim" ] = self.actor.optim.state_dict()

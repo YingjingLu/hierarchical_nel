@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Actor_Network( nn.Module ):
-    def __init__(self ):
+    def __init__( self ):
         super( Actor_Network, self ).__init__()
         self.conv1 = nn.Conv2d(3, 8, 5)
         self.conv2 = nn.Conv2d(8, 16, 3)
@@ -12,6 +12,7 @@ class Actor_Network( nn.Module ):
         self.l2 = nn.Linear( 256, 256 )
         self.l_a_0 = nn.Linear( 256, 256 )
         self.l_a_2 = nn.Linear( 256, 3 )
+        self.softmax = torch.nn.softmax( dim = 1 )
 
     def forward( self, delta_scent_batch, prev_vision_batch, cur_vision_batch, moved_batch, tong_batch ):
         delta_scent_batch = torch.tensor( delta_scent_batch, dtype = torch.float32 ).cuda()
@@ -39,7 +40,7 @@ class Actor_Network( nn.Module ):
         conv = F.relu( self.l1( conv ) )
         conv = F.relu( self.l2( conv ) )
         conv = F.relu( self.l_a_0( conv ) )
-        conv = self.l_a_2( conv )
+        conv = self.softmax( self.l_a_2( conv ) )
         return conv
 
 class Critic_Network( nn.Module ):
